@@ -4,11 +4,11 @@ import React from 'react';
 import './Profile.css';
 
 // Importing images from your assets folder
-import avatarImg from './assets/avatar.png';
-import figmaImg from './assets/figma.svg';
-import apiImg from './assets/apidoc.png';
-import githubImg from './assets/github.svg';
-import pdfImg from './assets/pdf.png';
+import avatarImg from '../assets/avatar.png';
+import figmaImg from '../assets/figma.svg';
+import apiImg from '../assets/apidoc.png';
+import githubImg from '../assets/github.svg';
+import pdfImg from '../assets/pdf.png';
 
 const Profile = () => {
     return (

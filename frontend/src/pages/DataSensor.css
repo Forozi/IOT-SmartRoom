@@ -20,15 +20,16 @@
 /* Base style for card-like bars (filter, table wrapper, footer) */
 .filter-bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Align to start to keep things tight */
     align-items: center;
-    margin-bottom: 15px;
-    padding: 15px;
+    margin-bottom: 12px;
+    padding: 10px 15px;      /* Slightly reduced padding */
     background-color: white;
-    border: 1px solid #777;
+    border: 1px solid #d1d5db; /* Softer border */
     border-radius: 6px;
-    gap: 20px;
+    gap: 12px;               /* Reduced gap between sections */
     flex-shrink: 0;
+    flex-wrap: wrap;         /* Allow wrapping if absolutely necessary, but we'll try to fit */
 }
 
 .table-wrapper {
@@ -96,10 +97,13 @@ tbody tr:hover {
     font-size: 13px;
     box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
+    background-color: white !important; /* Force white background */
+    color: black !important;            /* Force black text */
+    color-scheme: light !important;      /* Prevent browser from forcing dark mode on elements */
 }
 
 .search-bar-manual input {
-    width: 200px;
+    width: 200px; /* Reduced from 250px to prevent overflow */
 }
 
 /* Buttons */
@@ -107,8 +111,7 @@ tbody tr:hover {
     padding: 8px 16px;
     border: 1px solid #000;
     border-radius: 6px;
-    background-color: #3b82f6;
-    /* Blue */
+    background-color: #344e41; /* Dark green to match sidebar */
     color: white;
     font-weight: bold;
     font-size: 13px;
@@ -206,15 +209,16 @@ tbody tr:hover {
 .status-filter {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 14px;
+    gap: 8px; /* Reduced gap */
+    font-size: 13px; /* Slightly smaller font */
     font-weight: bold;
+    color: #4b5563; /* Greyish text */
 }
 
 .status-filter label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 3px;
     cursor: pointer;
     font-weight: normal;
 }
@@ -222,9 +226,10 @@ tbody tr:hover {
 .sensor-highlighter {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 14px;
+    gap: 8px; /* Reduced gap */
+    font-size: 13px;
     font-weight: bold;
+    color: #4b5563;
 }
 
 .per-page-selector {

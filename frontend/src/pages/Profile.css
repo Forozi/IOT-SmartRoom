@@ -8,6 +8,11 @@
     gap: 30px;
     height: 100%;
     box-sizing: border-box;
+    color: black !important; /* Force all text to black */
+}
+
+.profile-page-wrapper * {
+    color: black !important;
 }
 
 /* LEFT COLUMN: Profile Card */

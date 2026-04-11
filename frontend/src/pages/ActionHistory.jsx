@@ -117,8 +117,8 @@ const ActionHistory = ({ socket, isActive }) => {
                 <div className="status-filter">
                     <span>Status:</span>
                     <label><input type="radio" value="all" checked={statusFilter === 'all'} onChange={handleStatusChange} /> All</label>
-                    <label><input type="radio" value="ok" checked={statusFilter === 'ok'} onChange={handleStatusChange} /> OK (Success)</label>
-                    <label><input type="radio" value="error" checked={statusFilter === 'error'} onChange={handleStatusChange} /> Error (Pending)</label>
+                    <label><input type="radio" value="ok" checked={statusFilter === 'ok'} onChange={handleStatusChange} /> Success</label>
+                    <label><input type="radio" value="error" checked={statusFilter === 'error'} onChange={handleStatusChange} /> Error</label>
                 </div>
             </div>
 
@@ -161,6 +161,7 @@ const ActionHistory = ({ socket, isActive }) => {
                         <option value={10}>10</option>
                         <option value={25}>25</option>
                         <option value={50}>50</option>
+                        <option value={100}>100</option>
                     </select>
                 </div>
                 <div className="pagination">
