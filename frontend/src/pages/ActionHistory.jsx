@@ -2,12 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { CONFIG } from '../config';
 import './DataSensor.css';
 
 const deviceMap = {
     'LED_1': 'Lamp',
     'LED_2': 'AC',
     'LED_3': 'Fan'
+    // --- NEW DEVICES ---
+    // 'LED_4': 'Speaker',
+    // 'LED_5': 'Window'
 };
 
 const ActionHistory = ({ socket, isActive }) => {
@@ -24,7 +28,7 @@ const ActionHistory = ({ socket, isActive }) => {
 
     const fetchData = useCallback(async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/action-history`, {
+            const res = await axios.get(CONFIG.API_ENDPOINTS.ACTION_HISTORY, {
                 params: {
                     page: currentPage,
                     limit: rowsPerPage,
@@ -111,6 +115,10 @@ const ActionHistory = ({ socket, isActive }) => {
                         <option value="LED_1">Lamp</option>
                         <option value="LED_2">AC</option>
                         <option value="LED_3">Fan</option>
+                        {/* --- NEW DEVICES ---
+                        <option value="LED_4">Speaker</option>
+                        <option value="LED_5">Window</option>
+                        */}
                     </select>
                 </div>
 

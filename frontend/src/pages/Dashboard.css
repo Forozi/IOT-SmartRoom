@@ -52,19 +52,19 @@
   width: 220px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  justify-content: space-evenly;
   height: 100%;
 }
 
 .sensor-card {
-  flex: 1;
+  height: 140px;
+  box-sizing: border-box;
   border: 1px solid #333;
   border-radius: 6px;
   display: flex;
   flex-direction: row;
   align-items: stretch;
   position: relative;
-  min-height: 0;
   overflow: hidden;
 }
 
@@ -83,7 +83,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 10px;
+  padding: 8px 5px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -91,24 +91,26 @@
 .light-card { background-color: #fde6cc; }
 .temp-card { background-color: #f8cdd1; }
 .hum-card { background-color: #c0d4f5; }
+.sound-card { background-color: #d1fae5; }
+.wind-card { background-color: #e9d5ff; }
 
 .sensor-card svg {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   color: #000;
   opacity: 0.8;
 }
 
 .sensor-card h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   color: #000;
 }
 
 .sensor-card h2 {
   margin: 2px 0 0 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: #000;
 }
@@ -126,6 +128,11 @@
   animation: blink 1s infinite;
 }
 
+.sensor-card p.status-warning {
+  color: #f97316;
+  animation: blink 1s infinite;
+}
+
 .card-error { border: 2px solid red !important; }
 
 @keyframes blink {
@@ -139,26 +146,26 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 5px;
+  gap: 3px;
   flex-shrink: 0;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 5px;
   padding: 0;
   box-sizing: border-box;
 }
 
 .btn-label {
   width: 100%;
-  height: 32px;
+  height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 11px;
   padding: 0;
   border: 1px solid #000;
-  border-radius: 6px;
+  border-radius: 4px;
   background: white;
   text-align: center;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
@@ -168,10 +175,11 @@
   background-color: #f59e0b;
   color: #000;
   padding: 0;
-  height: 32px;
+  height: 20px;
   border: 1px solid #000;
   border-radius: 4px;
   font-weight: bold;
+  font-size: 11px;
   flex: 1;
   text-align: center;
   display: flex;
@@ -183,7 +191,6 @@
 }
 
 .control-section>div[style] {
-  gap: 0 !important;
   flex: 1;
   display: flex;
   width: 100%;
@@ -194,12 +201,13 @@
   background-color: #4ade80;
   color: #000;
   font-weight: bold;
+  font-size: 11px;
   padding: 0;
   border: 1px solid #000;
-  border-radius: 4px 0 0 4px;
+  border-radius: 4px;
   cursor: pointer;
   flex: 1;
-  height: 32px;
+  height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -212,13 +220,13 @@
   background-color: #f87171;
   color: #000;
   font-weight: bold;
+  font-size: 11px;
   padding: 0;
   border: 1px solid #000;
-  border-left: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   cursor: pointer;
   flex: 1;
-  height: 32px;
+  height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -229,7 +237,7 @@
 
 .btn-on:hover, .btn-off:hover { filter: brightness(0.9); }
 
-/* SUMMARY CARD (Bottom Left) */
+/* SUMMARY CARD (Bottom Full Width) */
 .summary-card {
   background: white;
   border: 1px solid #777;
@@ -238,6 +246,9 @@
   align-items: center;
   gap: 20px;
   flex-shrink: 0;
+  margin-top: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .summary-title {

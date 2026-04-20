@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { CONFIG } from '../config';
 
 const DataSensor = ({ socket, isActive }) => {
     const [data, setData] = useState([]);
@@ -14,16 +15,20 @@ const DataSensor = ({ socket, isActive }) => {
     // We only need one state for search now.
     const [searchInput, setSearchInput] = useState('');
     const [searchTerm, setSearchTerm] = useState(''); // This will only be set on button click
+    const [valueInput, setValueInput] = useState('');
+    const [searchValue, setSearchValue] = useState('');
 
     // This fetchData function now depends on `searchTerm`
     const fetchData = useCallback(async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/sensor-data`, {
+            const res = await axios.get(CONFIG.API_ENDPOINTS.SENSOR_DATA, {
                 params: {
                     page: currentPage,
                     limit: rowsPerPage,
                     status: statusFilter,
                     search: searchTerm,
+                    value: searchValue,
+                    sensor: activeSensor
                 },
             });
             setData(res.data.data);
@@ -31,14 +36,14 @@ const DataSensor = ({ socket, isActive }) => {
         } catch (error) {
             console.error("Failed to fetch sensor data:", error);
         }
-    }, [currentPage, rowsPerPage, statusFilter, searchTerm]);
+    }, [currentPage, rowsPerPage, statusFilter, searchTerm, searchValue, activeSensor]);
 
     // The debounce useEffect is now gone. This effect runs when filters or the search term changes.
     useEffect(() => {
         if (isActive) {
             fetchData();
         }
-    }, [isActive, currentPage, rowsPerPage, statusFilter, searchTerm, fetchData]);
+    }, [isActive, currentPage, rowsPerPage, statusFilter, searchTerm, searchValue, activeSensor, fetchData]);
 
     // Real-time update effect remains the same.
     useEffect(() => {
@@ -55,6 +60,7 @@ const DataSensor = ({ socket, isActive }) => {
     // --- NEW HANDLERS FOR MANUAL SEARCH ---
     const handleSearchClick = () => {
         setSearchTerm(searchInput);
+        setSearchValue(valueInput);
         setCurrentPage(1); // Reset to page 1 for a new search
     };
 
@@ -62,6 +68,8 @@ const DataSensor = ({ socket, isActive }) => {
         // Reset all filter states to their default values
         setSearchInput('');
         setSearchTerm('');
+        setValueInput('');
+        setSearchValue('');
         setStatusFilter('all');
         setActiveSensor('all');
 
@@ -90,19 +98,26 @@ const DataSensor = ({ socket, isActive }) => {
                 <div className="search-bar-manual"> {/* Changed class for easier styling */}
                     <input
                         type="text"
-                        placeholder="Search by date or time..."
+                        placeholder="Date/Time..."
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()} // Bonus: allow search on Enter key
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
+                    />
+                    <input
+                        type="number"
+                        placeholder="Exact value..."
+                        value={valueInput}
+                        onChange={(e) => setValueInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
                     />
                     <button onClick={handleSearchClick}>Search</button>
                     <button onClick={handleResetClick} className="reset-btn">Reset</button>
                 </div>
 
                 <div className="sensor-highlighter">
-                    <label htmlFor="sensorHighlight">Highlight:</label>
-                    <select id="sensorHighlight" value={activeSensor} onChange={(e) => setActiveSensor(e.target.value)}>
-                        <option value="all">Show All Normally</option>
+                    <label htmlFor="sensorHighlight">Filter/Highlight:</label>
+                    <select id="sensorHighlight" value={activeSensor} onChange={(e) => { setActiveSensor(e.target.value); setCurrentPage(1); }}>
+                        <option value="all">All Sensors</option>
                         <option value="temp">Temperature</option>
                         <option value="hum">Humidity</option>
                         <option value="light">Light</option>
@@ -125,7 +140,7 @@ const DataSensor = ({ socket, isActive }) => {
                             <th className={getColumnClass('id')}>ID</th>
                             <th className={getColumnClass('temp')}>Temperature (°C)</th>
                             <th className={getColumnClass('hum')}>Humidity (%)</th>
-                            <th className={getColumnClass('light')}>Light</th>
+                            <th className={getColumnClass('light')}>Light (lux)</th>
                             <th className={getColumnClass('status')}>Status</th>
                             <th className={getColumnClass('time')}>Timestamp</th>
                         </tr>
@@ -134,9 +149,15 @@ const DataSensor = ({ socket, isActive }) => {
                         {data.map((row) => (
                             <tr key={row.id}>
                                 <td className={getColumnClass('id')}>{row.id}</td>
-                                <td className={getColumnClass('temp')}>{row.temp !== null ? row.temp.toFixed(2) : 'N/A'}</td>
-                                <td className={getColumnClass('hum')}>{row.hum !== null ? row.hum.toFixed(2) : 'N/A'}</td>
-                                <td className={getColumnClass('light')}>{row.light !== null ? row.light : 'N/A'}</td>
+                                <td className={`${getColumnClass('temp')} ${searchValue && row.temp !== null && Number(row.temp).toFixed(2) === Number(searchValue).toFixed(2) ? 'sensor-bold' : ''}`}>
+                                    {row.temp !== null ? row.temp.toFixed(2) : 'N/A'}
+                                </td>
+                                <td className={`${getColumnClass('hum')} ${searchValue && row.hum !== null && Number(row.hum).toFixed(2) === Number(searchValue).toFixed(2) ? 'sensor-bold' : ''}`}>
+                                    {row.hum !== null ? row.hum.toFixed(2) : 'N/A'}
+                                </td>
+                                <td className={`${getColumnClass('light')} ${searchValue && row.light !== null && Number(row.light).toFixed(2) === Number(searchValue).toFixed(2) ? 'sensor-bold' : ''}`}>
+                                    {row.light !== null ? row.light : 'N/A'}
+                                </td>
                                 <td className={getColumnClass('status')}>
                                     <span className={`status-dot ${row.temp !== null ? 'ok' : 'error'}`}></span>
                                     {row.temp !== null ? 'OK' : 'ERROR'}

@@ -1,6 +1,7 @@
 const mqtt = require('mqtt');
+const CONFIG = require('../config');
 
-const MQTT_BROKER = 'mqtt://192.168.1.42';
+const MQTT_BROKER = CONFIG.MQTT_BROKER;
 
 function setupMQTT(db, io) {
     const client = mqtt.connect(MQTT_BROKER);
@@ -10,28 +11,15 @@ function setupMQTT(db, io) {
 
     client.on('connect', () => {
         console.log("MQTT: Connected to broker at " + MQTT_BROKER);
-        client.subscribe(['room/status_report', 'room/sensor_data']);
+        client.subscribe([CONFIG.MQTT_TOPICS.STATUS_REPORT, CONFIG.MQTT_TOPICS.SENSOR_DATA]);
     });
-
-    // Watchdog for sensors
-    setInterval(() => {
-        const now = Date.now();
-        if (now - lastDataTime > 6000) {
-            if (!isOfflineLogged) {
-                console.log("⚠️ Sensor disconnected → logging NULL row");
-                db.run(`INSERT INTO sensor_data (temp, hum, light) VALUES (?, ?, ?)`, [null, null, null]);
-                io.emit('sensor_update', { temp: null, hum: null, light: null });
-                isOfflineLogged = true;
-            }
-        }
-    }, 1000);
 
     client.on('message', (topic, message) => {
         try {
             const payload = message.toString();
             const data = JSON.parse(payload);
 
-            if (topic === 'room/status_report') {
+            if (topic === CONFIG.MQTT_TOPICS.STATUS_REPORT) {
                 const sqlUpdate = `
                     UPDATE action_history SET status = 'SUCCESS' WHERE id = (
                         SELECT id FROM action_history WHERE status = 'PENDING' ORDER BY created_at DESC LIMIT 1
@@ -51,9 +39,15 @@ function setupMQTT(db, io) {
                 });
             }
 
-            if (topic === 'room/sensor_data') {
+            if (topic === CONFIG.MQTT_TOPICS.SENSOR_DATA) {
                 lastDataTime = Date.now();
                 isOfflineLogged = false;
+
+                // Normalize light from 0-4096 to 0-100 lux
+                if (data.light != null) {
+                    data.light = Math.min(100, Math.max(0, Math.round((data.light / 4096) * 100)));
+                }
+
                 db.run(`INSERT INTO sensor_data (temp, hum, light) VALUES (?, ?, ?)`, [data.temp, data.hum, data.light]);
                 io.emit('sensor_update', data);
             }
@@ -61,6 +55,19 @@ function setupMQTT(db, io) {
             console.error("MQTT Processing Error:", e.message);
         }
     });
+
+    // Watchdog for sensors
+    setInterval(() => {
+        const now = Date.now();
+        if (now - lastDataTime > 6000) {
+            if (!isOfflineLogged) {
+                console.log("⚠️ Sensor disconnected → logging NULL row");
+                db.run(`INSERT INTO sensor_data (temp, hum, light) VALUES (?, ?, ?)`, [null, null, null]);
+                io.emit('sensor_update', { temp: null, hum: null, light: null });
+                isOfflineLogged = true;
+            }
+        }
+    }, 1000);
 
     return client;
 }

@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDefinition = require('./swaggerConfig');
+const CONFIG = require('./config');
 
 // 1. --- DATABASE & SERVICES ---
 const db = require('./database/db');
@@ -29,7 +30,7 @@ app.use('/api', setupRoutes(db, mqttClient, io));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
 
 // 5. --- START SERVER ---
-const PORT = 5000;
+const PORT = CONFIG.PORT;
 server.listen(PORT, () => {
     console.log(`SERVER RUNNING ON PORT: ${PORT}`);
     console.log(`API DOCS: http://localhost:${PORT}/api-docs`);

@@ -103,7 +103,7 @@ tbody tr:hover {
 }
 
 .search-bar-manual input {
-    width: 200px; /* Reduced from 250px to prevent overflow */
+    width: 140px; 
 }
 
 /* Buttons */
@@ -238,6 +238,12 @@ tbody tr:hover {
     gap: 10px;
     font-size: 14px;
     font-weight: bold;
+}
+
+.sensor-bold {
+    font-weight: 900;
+    color: #000;
+    text-decoration: underline;
 }
 
 .dimmed {

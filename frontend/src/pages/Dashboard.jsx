@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Sun, Thermometer, Droplets } from 'lucide-react';
+import { Sun, Thermometer, Droplets, Volume2, Wind } from 'lucide-react';
+import { CONFIG } from '../config';
 import './Dashboard.css';
 
 const DeviceControl = ({ name, deviceId, status, onControl }) => (
@@ -22,19 +23,104 @@ const DeviceControl = ({ name, deviceId, status, onControl }) => (
 
 const Dashboard = ({ socket, isActive }) => {
   const [sensors, setSensors] = useState({ temp: 0, hum: 0, light: 0 });
-  const [deviceStatus, setDeviceStatus] = useState({ LED_1: 'OFF', LED_2: 'OFF', LED_3: 'OFF' });
+  const [deviceStatus, setDeviceStatus] = useState({ 
+    LED_1: 'OFF', LED_2: 'OFF', LED_3: 'OFF'
+    // --- NEW DEVICES ---
+    // LED_4: 'OFF', LED_5: 'OFF'
+  });
+  // --- NEW DEVICES ---
+  // const [virtualData, setVirtualData] = useState({ v4: 80, v5: 50 });
   const [chartData, setChartData] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [todaySummary, setTodaySummary] = useState(null);
   const [lastSummaryUpdate, setLastSummaryUpdate] = useState('');
 
+  const lightThresholdLow = (1500 / 4096) * 100;
+  const lightThresholdHigh = (3000 / 4096) * 100;
+  const isLightWarning = isOnline && (sensors.light < lightThresholdLow || sensors.light > lightThresholdHigh);
+
+  // --- API Functions using CONFIG ---
+  const fetchCurrentStatus = async () => {
+    try {
+      const res = await axios.get(CONFIG.API_ENDPOINTS.CURRENT_STATUS);
+      setDeviceStatus(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchSummaryData = async () => {
+    try {
+      const res = await axios.get(CONFIG.API_ENDPOINTS.TODAY_SUMMARY);
+      setTodaySummary(res.data);
+      setLastSummaryUpdate(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    } catch (error) {
+      console.error("Failed to fetch summary data:", error);
+    }
+  };
+
+  const fetchChartData = async () => {
+    try {
+      const res = await axios.get(`${CONFIG.API_BASE_URL}/api/sensor-data?limit=20`);
+      if (res.data && res.data.data) {
+        const historical = res.data.data.map(d => ({
+          time: new Date(d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          temp: d.temp,
+          hum: d.hum,
+          light: d.light
+        })).reverse();
+        setChartData(historical);
+
+        if (res.data.data.length > 0) {
+            const latest = res.data.data[0];
+            if (latest.temp !== null) {
+                setSensors({ temp: latest.temp, hum: latest.hum, light: latest.light });
+            }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch chart data:", error);
+    }
+  };
+
+  const handleControl = async (ledNumber, targetState) => {
+    const deviceName = `LED_${ledNumber}`;
+    setDeviceStatus(prev => ({ ...prev, [deviceName]: "LOADING" }));
+    try {
+      await axios.post(CONFIG.API_ENDPOINTS.CONTROL, { cmd: "device_action", led: ledNumber, state: targetState });
+    } catch (err) {
+      console.error("Control Error:", err);
+      fetchCurrentStatus();
+    }
+  };
+  // ----------------------------------
+  // ----------------------------------
+
+  // --- NEW DEVICES ---
+  // const updateVirtualData = () => {
+  //   setVirtualData(prev => {
+  //     const generateNew = (oldVal) => {
+  //       let val = oldVal === "N/A" ? 50 : oldVal;
+  //       let change = Math.floor(Math.random() * 31) - 15; // -15 to +15
+  //       let newVal = val + change;
+  //       if (newVal < 0) newVal = 0;
+  //       if (newVal > 100) newVal = 100;
+  //       return newVal;
+  //     };
+  //     return {
+  //       v4: generateNew(prev.v4),
+  //       v5: generateNew(prev.v5)
+  //     };
+  //   });
+  // };
+  // -------------------
+
   useEffect(() => {
     if (!isActive) return;
 
-    // 1. Initial Device Status Fetch
-    axios.get('http://localhost:5000/api/current-status').then(res => {
-      setDeviceStatus(res.data);
-    });
+    // 1. Initial Fetch
+    fetchCurrentStatus();
+    fetchChartData();
 
     // 2. Real-time Sensor Updates
     const handleSensorUpdate = (data) => {
@@ -72,33 +158,19 @@ const Dashboard = ({ socket, isActive }) => {
 
   // 4. Polling for Today's Summary Data
   useEffect(() => {
-    const fetchSummaryData = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/today-summary');
-        setTodaySummary(res.data);
-        setLastSummaryUpdate(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      } catch (error) {
-        console.error("Failed to fetch summary data:", error);
-      }
-    };
-
     if (isActive) {
       fetchSummaryData();
-      const intervalId = setInterval(fetchSummaryData, 30000);
+      // --- NEW DEVICES ---
+      // updateVirtualData();
+
+      const intervalId = setInterval(() => {
+          fetchSummaryData();
+          // --- NEW DEVICES ---
+          // updateVirtualData();
+      }, 30000);
       return () => clearInterval(intervalId);
     }
   }, [isActive]);
-
-  const handleControl = async (ledNumber, targetState) => {
-    const deviceName = `LED_${ledNumber}`;
-    setDeviceStatus(prev => ({ ...prev, [deviceName]: "LOADING" }));
-    try {
-      await axios.post('http://localhost:5000/api/control', { cmd: "device_action", led: ledNumber, state: targetState });
-    } catch (err) {
-      console.error("Control Error:", err);
-      axios.get('http://localhost:5000/api/current-status').then(res => setDeviceStatus(res.data));
-    }
-  };
 
   return (
     <>
@@ -107,61 +179,21 @@ const Dashboard = ({ socket, isActive }) => {
 
         <div className="charts-area">
           <div className="chart-card">
-            <h3>Brightness graph</h3>
-            <div style={{ height: '250px', width: '100%' }}>
+            <h3>Master Sensor Graph</h3>
+            <div style={{ height: '400px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="time" />
                   <YAxis />
                   <Tooltip />
-                  <Line connectNulls={false} type="monotone" dataKey="light" stroke="#ef4444" dot={false} strokeWidth={3} />
+                  <Line isAnimationActive={false} connectNulls={false} type="linear" dataKey="temp" name="Temperature (°C)" stroke="#f59e0b" dot={true} strokeWidth={3} />
+                  <Line isAnimationActive={false} connectNulls={false} type="linear" dataKey="hum" name="Humidity (%)" stroke="#3b82f6" dot={true} strokeWidth={3} />
+                  <Line isAnimationActive={false} connectNulls={false} type="linear" dataKey="light" name="Light (lux)" stroke="#ef4444" dot={true} strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="chart-card">
-            <h3>Temp and humidity graph</h3>
-            <div style={{ height: '250px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line connectNulls={false} type="monotone" dataKey="temp" stroke="#f59e0b" dot={false} strokeWidth={3} />
-                  <Line connectNulls={false} type="monotone" dataKey="hum" stroke="#3b82f6" dot={false} strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {todaySummary && (
-            <div className="summary-card">
-              <div className="summary-title">
-                <h4>Today's Data</h4>
-                <span className="last-update-text">Last update: {lastSummaryUpdate}</span>
-              </div>
-              <div className="summary-stats">
-                <div>
-                  <p>Avg Temp: <strong>{todaySummary.avg_temp.toFixed(1)}°C</strong></p>
-                  <p>Avg Hum: <strong>{todaySummary.avg_hum.toFixed(1)}%</strong></p>
-                  <p>Avg Light: <strong>{todaySummary.avg_light != null ? todaySummary.avg_light.toFixed(1) : "N/A"}</strong></p>
-                </div>
-                <div>
-                  <p>Highest Temp: <strong>{todaySummary.max_temp.toFixed(1)}°C</strong></p>
-                  <p>Highest Hum: <strong>{todaySummary.max_hum.toFixed(1)}%</strong></p>
-                  <p>Highest Light: <strong>{todaySummary.max_light != null ? todaySummary.max_light.toFixed(1) : "N/A"}</strong></p>
-                </div>
-                <div>
-                  <p>Lowest Temp: <strong>{todaySummary.min_temp.toFixed(1)}°C</strong></p>
-                  <p>Lowest Hum: <strong>{todaySummary.min_hum.toFixed(1)}%</strong></p>
-                  <p>Lowest Light: <strong>{todaySummary.min_light != null ? todaySummary.min_light.toFixed(1) : "N/A"}</strong></p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="sensor-stack">
@@ -169,8 +201,10 @@ const Dashboard = ({ socket, isActive }) => {
             <div className="card-left"><Sun /></div>
             <div className="card-right">
               <h3>Light</h3>
-              <h2>{isOnline ? sensors.light : "N/A"}</h2>
-              <p className={isOnline ? 'status-ok' : 'status-error'}>{isOnline ? "System: OK" : "System: ERROR"}</p>
+              <h2>{isOnline ? `${Math.round(sensors.light)} lux` : "N/A"}</h2>
+              <p className={!isOnline ? 'status-error' : (isLightWarning ? 'status-warning' : 'status-ok')}>
+                {!isOnline ? "System: ERROR" : (isLightWarning ? "System: WARNING" : "System: OK")}
+              </p>
               <DeviceControl name="LAMP" deviceId={1} status={deviceStatus.LED_1} onControl={handleControl} />
             </div>
           </div>
@@ -194,8 +228,56 @@ const Dashboard = ({ socket, isActive }) => {
               <DeviceControl name="FAN" deviceId={3} status={deviceStatus.LED_3} onControl={handleControl} />
             </div>
           </div>
+
+          {/* --- NEW DEVICES ---
+          <div className="sensor-card sound-card">
+            <div className="card-left"><Volume2 /></div>
+            <div className="card-right">
+              <h3>Sound(db)</h3>
+              <h2>{virtualData.v4} db</h2>
+              <p className="status-ok">System: OK</p>
+              <DeviceControl name="Speaker" deviceId={4} status={deviceStatus.LED_4} onControl={handleControl} />
+            </div>
+          </div>
+
+          <div className="sensor-card wind-card">
+            <div className="card-left"><Wind /></div>
+            <div className="card-right">
+              <h3>Wind Speed</h3>
+              <h2>{virtualData.v5} mph</h2>
+              <p className="status-ok">System: OK</p>
+              <DeviceControl name="Window" deviceId={5} status={deviceStatus.LED_5} onControl={handleControl} />
+            </div>
+          </div>
+          */}
         </div>
       </div>
+
+      {todaySummary && (
+        <div className="summary-card full-width">
+          <div className="summary-title">
+            <h4>Today's Data</h4>
+            <span className="last-update-text">Last update: {lastSummaryUpdate}</span>
+          </div>
+          <div className="summary-stats">
+            <div>
+              <p>Avg Temp: <strong>{todaySummary.avg_temp.toFixed(1)}°C</strong></p>
+              <p>Avg Hum: <strong>{todaySummary.avg_hum.toFixed(1)}%</strong></p>
+              <p>Avg Light: <strong>{todaySummary.avg_light != null ? todaySummary.avg_light.toFixed(1) : "N/A"} lux</strong></p>
+            </div>
+            <div>
+              <p>Highest Temp: <strong>{todaySummary.max_temp.toFixed(1)}°C</strong></p>
+              <p>Highest Hum: <strong>{todaySummary.max_hum.toFixed(1)}%</strong></p>
+              <p>Highest Light: <strong>{todaySummary.max_light != null ? todaySummary.max_light.toFixed(1) : "N/A"} lux</strong></p>
+            </div>
+            <div>
+              <p>Lowest Temp: <strong>{todaySummary.min_temp.toFixed(1)}°C</strong></p>
+              <p>Lowest Hum: <strong>{todaySummary.min_hum.toFixed(1)}%</strong></p>
+              <p>Lowest Light: <strong>{todaySummary.min_light != null ? todaySummary.min_light.toFixed(1) : "N/A"} lux</strong></p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -8,9 +8,10 @@ import Dashboard from './pages/Dashboard';
 import DataSensor from './pages/DataSensor';
 import ActionHistory from './pages/ActionHistory';
 import Profile from './pages/Profile';
+import { CONFIG } from './config';
 import './App.css';
 
-const socket = io('http://localhost:5000');
+const socket = io(CONFIG.API_BASE_URL);
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');
