@@ -4,20 +4,20 @@ const CONFIG = require('../config');
 const MQTT_BROKER = CONFIG.MQTT_BROKER;
 
 function setupMQTT(db, io) {
-    const client = mqtt.connect(MQTT_BROKER);
+    const client = mqtt.connect(MQTT_BROKER); //set up broker connection
 
     let lastDataTime = Date.now();
     let isOfflineLogged = false;
 
     client.on('connect', () => {
         console.log("MQTT: Connected to broker at " + MQTT_BROKER);
-        client.subscribe([CONFIG.MQTT_TOPICS.STATUS_REPORT, CONFIG.MQTT_TOPICS.SENSOR_DATA]);
+        client.subscribe([CONFIG.MQTT_TOPICS.STATUS_REPORT, CONFIG.MQTT_TOPICS.SENSOR_DATA]); //subscribe to topics
     });
 
     client.on('message', (topic, message) => {
         try {
-            const payload = message.toString();
-            const data = JSON.parse(payload);
+            const payload = message.toString(); //convert message to string
+            const data = JSON.parse(payload); //parse JSON data
 
             if (topic === CONFIG.MQTT_TOPICS.STATUS_REPORT) {
                 const sqlUpdate = `
@@ -34,7 +34,7 @@ function setupMQTT(db, io) {
                     if (key.startsWith("LED")) {
                         const ledNum = parseInt(key.split(' ')[1]);
                         const deviceName = `LED_${ledNum}`;
-                        io.emit('device_update', { device: deviceName, state: data[key] });
+                        io.emit('device_update', { device: deviceName, state: data[key] }); //push to frontend LED data
                     }
                 });
             }
@@ -49,21 +49,21 @@ function setupMQTT(db, io) {
                 }
 
                 db.run(`INSERT INTO sensor_data (temp, hum, light) VALUES (?, ?, ?)`, [data.temp, data.hum, data.light]);
-                io.emit('sensor_update', data);
+                io.emit('sensor_update', data); //push to frontend sensor data
             }
         } catch (e) {
             console.error("MQTT Processing Error:", e.message);
         }
     });
 
-    // Watchdog for sensors
+    // Watchdog for sensors 6s
     setInterval(() => {
         const now = Date.now();
         if (now - lastDataTime > 6000) {
             if (!isOfflineLogged) {
-                console.log("⚠️ Sensor disconnected → logging NULL row");
+                console.log("Sensor disconnected → logging NULL row");
                 db.run(`INSERT INTO sensor_data (temp, hum, light) VALUES (?, ?, ?)`, [null, null, null]);
-                io.emit('sensor_update', { temp: null, hum: null, light: null });
+                io.emit('sensor_update', { temp: null, hum: null, light: null }); //if sensor disconnect, push null to frontend
                 isOfflineLogged = true;
             }
         }

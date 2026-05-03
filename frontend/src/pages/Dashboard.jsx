@@ -22,14 +22,10 @@ const DeviceControl = ({ name, deviceId, status, onControl }) => (
 );
 
 const Dashboard = ({ socket, isActive }) => {
-  const [sensors, setSensors] = useState({ temp: 0, hum: 0, light: 0 });
-  const [deviceStatus, setDeviceStatus] = useState({ 
+  const [sensors, setSensors] = useState({ temp: null, hum: null, light: null });
+  const [deviceStatus, setDeviceStatus] = useState({
     LED_1: 'OFF', LED_2: 'OFF', LED_3: 'OFF'
-    // --- NEW DEVICES ---
-    // LED_4: 'OFF', LED_5: 'OFF'
   });
-  // --- NEW DEVICES ---
-  // const [virtualData, setVirtualData] = useState({ v4: 80, v5: 50 });
   const [chartData, setChartData] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [todaySummary, setTodaySummary] = useState(null);
@@ -37,9 +33,20 @@ const Dashboard = ({ socket, isActive }) => {
 
   const lightThresholdLow = (1500 / 4096) * 100;
   const lightThresholdHigh = (3000 / 4096) * 100;
-  const isLightWarning = isOnline && (sensors.light < lightThresholdLow || sensors.light > lightThresholdHigh);
 
-  // --- API Functions using CONFIG ---
+  const isLightWarning = isOnline && (sensors.light < lightThresholdLow || sensors.light > lightThresholdHigh);
+  const isTempWarning = isOnline && (sensors.temp < 15);
+  const isHumWarning = isOnline && (sensors.hum < 20);
+
+  const getStatus = (specificWarning = false) => {
+    if (!isOnline) return { text: "System: ERROR", class: "status-error" };
+    if (specificWarning) return { text: "System: WARNING", class: "status-warning" };
+    return { text: "System: OK", class: "status-ok" };
+  };
+
+  const systemStatus = !isOnline ? "ERROR" : (isLightWarning || isTempWarning || isHumWarning ? "WARNING" : "OK");
+
+  // API Functions
   const fetchCurrentStatus = async () => {
     try {
       const res = await axios.get(CONFIG.API_ENDPOINTS.CURRENT_STATUS);
@@ -72,10 +79,15 @@ const Dashboard = ({ socket, isActive }) => {
         setChartData(historical);
 
         if (res.data.data.length > 0) {
-            const latest = res.data.data[0];
-            if (latest.temp !== null) {
-                setSensors({ temp: latest.temp, hum: latest.hum, light: latest.light });
-            }
+          const latest = res.data.data[0];
+          if (latest.temp !== null && latest.hum !== null && latest.light !== null) {
+            setSensors({ temp: latest.temp, hum: latest.hum, light: latest.light });
+            setIsOnline(true);
+          } else {
+            setIsOnline(false);
+          }
+        } else {
+          setIsOnline(false);
         }
       }
     } catch (error) {
@@ -93,42 +105,21 @@ const Dashboard = ({ socket, isActive }) => {
       fetchCurrentStatus();
     }
   };
-  // ----------------------------------
-  // ----------------------------------
-
-  // --- NEW DEVICES ---
-  // const updateVirtualData = () => {
-  //   setVirtualData(prev => {
-  //     const generateNew = (oldVal) => {
-  //       let val = oldVal === "N/A" ? 50 : oldVal;
-  //       let change = Math.floor(Math.random() * 31) - 15; // -15 to +15
-  //       let newVal = val + change;
-  //       if (newVal < 0) newVal = 0;
-  //       if (newVal > 100) newVal = 100;
-  //       return newVal;
-  //     };
-  //     return {
-  //       v4: generateNew(prev.v4),
-  //       v5: generateNew(prev.v5)
-  //     };
-  //   });
-  // };
-  // -------------------
 
   useEffect(() => {
     if (!isActive) return;
 
-    // 1. Initial Fetch
+    // INIT fetch
     fetchCurrentStatus();
     fetchChartData();
 
-    // 2. Real-time Sensor Updates
+    // Live Sensor Updates
     const handleSensorUpdate = (data) => {
-      if (data.temp === null) {
+      if (data.temp === null || data.hum === null || data.light === null) {
         setIsOnline(false);
       } else {
         setIsOnline(true);
-        setSensors(data);
+        setSensors(data); //update sensor data from mqtt
       }
       setChartData(prev => {
         const newData = [...prev, {
@@ -141,7 +132,7 @@ const Dashboard = ({ socket, isActive }) => {
       });
     };
 
-    // 3. Real-time Device Updates
+    // LIVE Device Updfates from socket
     const handleDeviceUpdate = (data) => {
       setDeviceStatus(prevStatus => ({ ...prevStatus, [data.device]: data.state }));
       setIsOnline(true);
@@ -156,17 +147,13 @@ const Dashboard = ({ socket, isActive }) => {
     };
   }, [socket, isActive]);
 
-  // 4. Polling for Today's Summary Data
+  // Today's Summary Data every 30 secs
   useEffect(() => {
     if (isActive) {
       fetchSummaryData();
-      // --- NEW DEVICES ---
-      // updateVirtualData();
 
       const intervalId = setInterval(() => {
-          fetchSummaryData();
-          // --- NEW DEVICES ---
-          // updateVirtualData();
+        fetchSummaryData();
       }, 30000);
       return () => clearInterval(intervalId);
     }
@@ -174,7 +161,6 @@ const Dashboard = ({ socket, isActive }) => {
 
   return (
     <>
-      <h1 className="dashboard-header">Dashboard</h1>
       <div className="dashboard-grid">
 
         <div className="charts-area">
@@ -202,8 +188,8 @@ const Dashboard = ({ socket, isActive }) => {
             <div className="card-right">
               <h3>Light</h3>
               <h2>{isOnline ? `${Math.round(sensors.light)} lux` : "N/A"}</h2>
-              <p className={!isOnline ? 'status-error' : (isLightWarning ? 'status-warning' : 'status-ok')}>
-                {!isOnline ? "System: ERROR" : (isLightWarning ? "System: WARNING" : "System: OK")}
+              <p className={getStatus(isLightWarning).class}>
+                {getStatus(isLightWarning).text}
               </p>
               <DeviceControl name="LAMP" deviceId={1} status={deviceStatus.LED_1} onControl={handleControl} />
             </div>
@@ -214,7 +200,7 @@ const Dashboard = ({ socket, isActive }) => {
             <div className="card-right">
               <h3>Temperature</h3>
               <h2>{isOnline ? `${sensors.temp}°C` : "N/A"}</h2>
-              <p className={isOnline ? 'status-ok' : 'status-error'}>{isOnline ? "System: OK" : "System: ERROR"}</p>
+              <p className={getStatus(isTempWarning).class}>{getStatus(isTempWarning).text}</p>
               <DeviceControl name="AC" deviceId={2} status={deviceStatus.LED_2} onControl={handleControl} />
             </div>
           </div>
@@ -224,32 +210,10 @@ const Dashboard = ({ socket, isActive }) => {
             <div className="card-right">
               <h3>Humidity</h3>
               <h2>{isOnline ? `${sensors.hum}%` : "N/A"}</h2>
-              <p className={isOnline ? 'status-ok' : 'status-error'}>{isOnline ? "System: OK" : "System: ERROR"}</p>
+              <p className={getStatus(isHumWarning).class}>{getStatus(isHumWarning).text}</p>
               <DeviceControl name="FAN" deviceId={3} status={deviceStatus.LED_3} onControl={handleControl} />
             </div>
           </div>
-
-          {/* --- NEW DEVICES ---
-          <div className="sensor-card sound-card">
-            <div className="card-left"><Volume2 /></div>
-            <div className="card-right">
-              <h3>Sound(db)</h3>
-              <h2>{virtualData.v4} db</h2>
-              <p className="status-ok">System: OK</p>
-              <DeviceControl name="Speaker" deviceId={4} status={deviceStatus.LED_4} onControl={handleControl} />
-            </div>
-          </div>
-
-          <div className="sensor-card wind-card">
-            <div className="card-left"><Wind /></div>
-            <div className="card-right">
-              <h3>Wind Speed</h3>
-              <h2>{virtualData.v5} mph</h2>
-              <p className="status-ok">System: OK</p>
-              <DeviceControl name="Window" deviceId={5} status={deviceStatus.LED_5} onControl={handleControl} />
-            </div>
-          </div>
-          */}
         </div>
       </div>
 

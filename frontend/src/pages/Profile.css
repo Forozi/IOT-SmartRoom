@@ -119,34 +119,21 @@
     font-size: 13px;
     font-style: italic;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    transition: 0.2s;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+    text-align: center;
     text-decoration: none;
-    color: black;
+    color: black !important;
+    transition: all 0.2s;
 }
 
 .action-btn:hover {
-    background-color: #f9fafb;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-    transform: translateY(-1px);
+    background-color: #f3f4f6;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+    transform: translate(-1px, -1px);
 }
 
 .icon-box img {
     max-width: 80%;
     max-height: 80%;
     object-fit: contain;
-}
-
-/* Ensure the action-btn looks the same but is now a div */
-.action-btn {
-    background-color: white;
-    border: 1px solid #777;
-    border-radius: 20px;
-    padding: 8px 25px;
-    font-size: 13px;
-    font-style: italic;
-    cursor: default;
-    /* Changed from pointer since no links */
-    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
-    text-align: center;
 }

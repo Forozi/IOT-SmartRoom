@@ -14,9 +14,6 @@ export const CONFIG = {
     DEVICES: {
         LAMP: { id: 1, key: 'LED_1', name: 'Lamp' },
         AC: { id: 2, key: 'LED_2', name: 'AC' },
-        FAN: { id: 3, key: 'LED_3', name: 'Fan' },
-        // --- NEW DEVICES ---
-        // DEVICE_4: { id: 4, key: 'LED_4', name: 'Speaker' },
-        // DEVICE_5: { id: 5, key: 'LED_5', name: 'Window' },
+        FAN: { id: 3, key: 'LED_3', name: 'Fan' }
     }
 };

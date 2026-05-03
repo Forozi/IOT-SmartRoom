@@ -11,8 +11,6 @@ const CONFIG = {
         LED_1: 'LED_1',
         LED_2: 'LED_2',
         LED_3: 'LED_3'
-        // LED_4: 'LED_4',
-        // LED_5: 'LED_5'
     }
 };
 

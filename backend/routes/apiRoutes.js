@@ -20,23 +20,6 @@ function setupRoutes(db, mqttClient, io) {
 
                 const actionId = this.lastID;
 
-                // --- NEW DEVICES (Virtual controls) ---
-                // if (led === 4 || led === 5) {
-                //     res.json({ id: actionId, status: "PENDING" });
-                //     setTimeout(() => {
-                //         if (led === 4) {
-                //             db.run(`UPDATE action_history SET status = 'SUCCESS' WHERE id = ?`, [actionId]);
-                //             io.emit('device_update', { device: deviceName, state: state ? 'ON' : 'OFF' });
-                //         } else if (led === 5) {
-                //             db.run(`UPDATE action_history SET status = 'ERROR' WHERE id = ?`, [actionId]);
-                //             // Emit reverted state on error
-                //             io.emit('device_update', { device: deviceName, state: state ? 'OFF' : 'ON' });
-                //         }
-                //     }, 2000);
-                //     return;
-                // }
-                // ------------------------------------
-
                 mqttClient.publish(CONFIG.MQTT_TOPICS.COMMAND, JSON.stringify(req.body));
                 res.json({ id: actionId, status: "PENDING" });
 
@@ -57,21 +40,43 @@ function setupRoutes(db, mqttClient, io) {
     router.get('/current-status', (req, res) => {
         db.all(`SELECT device, action, status FROM action_history WHERE id IN (SELECT MAX(id) FROM action_history GROUP BY device)`, (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
-            const status = { 
+            const status = {
                 LED_1: 'OFF', LED_2: 'OFF', LED_3: 'OFF'
-                // --- NEW DEVICES ---
-                // LED_4: 'OFF', LED_5: 'OFF'
             };
             rows.forEach(row => { status[row.device] = row.status === 'PENDING' ? 'LOADING' : row.action; });
             res.json(status);
         });
     });
 
-    router.get('/today-summary', (req, res) => {
-        const query = `SELECT COALESCE(AVG(temp),0) as avg_temp, COALESCE(MAX(temp),0) as max_temp, COALESCE(MIN(temp),0) as min_temp, 
-                       COALESCE(AVG(hum),0) as avg_hum, COALESCE(MAX(hum),0) as max_hum, COALESCE(MIN(hum),0) as min_hum,
-                       COALESCE(AVG(light),0) as avg_light, COALESCE(MAX(light),0) as max_light, COALESCE(MIN(light),0) as min_light
-                       FROM sensor_data WHERE date(created_at) = date('now','localtime') AND temp IS NOT NULL`;
+    router.get('/today-summary', (req, res) => { // 59 153 Dashboard
+        const query = `
+            SELECT 
+                -- Temperature statistics
+                COALESCE(AVG(temp), 0) AS avg_temp,   -- Average temperature (0 if no data)
+                COALESCE(MAX(temp), 0) AS max_temp,   -- Highest temperature
+                COALESCE(MIN(temp), 0) AS min_temp,   -- Lowest temperature
+
+                -- Humidity statistics
+                COALESCE(AVG(hum), 0) AS avg_hum,     -- Average humidity
+                COALESCE(MAX(hum), 0) AS max_hum,     -- Highest humidity
+                COALESCE(MIN(hum), 0) AS min_hum,     -- Lowest humidity
+
+                -- Light statistics
+                COALESCE(AVG(light), 0) AS avg_light, -- Average light level
+                COALESCE(MAX(light), 0) AS max_light, -- Highest light level
+                COALESCE(MIN(light), 0) AS min_light  -- Lowest light level
+
+            FROM sensor_data
+
+            WHERE 
+                -- Only get data from today
+                date(created_at) = date('now', 'localtime')
+
+                -- filter out invalid rows
+                AND temp IS NOT NULL
+        `;
+
+        // Execute query and return single row result
         db.get(query, (err, row) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json(row);
@@ -103,7 +108,7 @@ function setupRoutes(db, mqttClient, io) {
         if (status === 'ok') clauses.push(`temp IS NOT NULL`);
         else if (status === 'error') clauses.push(`temp IS NULL`);
         if (search) { clauses.push(`created_at LIKE ?`); params.push(`%${search}%`); }
-        
+
         if (value !== undefined && value !== null && value !== '') {
             const numVal = parseFloat(value);
             if (!isNaN(numVal)) {
@@ -116,7 +121,7 @@ function setupRoutes(db, mqttClient, io) {
                 }
             }
         }
-        
+
         const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
 
         db.get(`SELECT COUNT(*) as total FROM sensor_data ${where}`, params, (err, countRow) => {

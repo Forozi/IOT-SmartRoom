@@ -29,7 +29,6 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* RIGHT: Action Links (Now using local images) */}
             <div className="links-container">
 
                 {/* Figma */}
@@ -39,7 +38,7 @@ const Profile = () => {
                     </div>
                     <div className="action-box">
                         <span>Figma</span>
-                        <div className="action-btn">My Figma</div>
+                        <a href="https://www.figma.com/design/I9UIpnk8awD83WpsmlXQjR/Hệ-thống-giám-sát-và-kiểm-soát-trạng-thái-phòng-cá-nhân?node-id=0-1&p=f&t=arWJ1lBxSIQNRl7i-0" target="_blank" rel="noopener noreferrer" className="action-btn">My Figma</a>
                     </div>
                 </div>
 
@@ -50,7 +49,7 @@ const Profile = () => {
                     </div>
                     <div className="action-box">
                         <span>API Docs</span>
-                        <div className="action-btn">My API Docs</div>
+                        <a href="http://localhost:5000/api-docs" target="_blank" rel="noopener noreferrer" className="action-btn">My API Docs</a>
                     </div>
                 </div>
 
@@ -61,7 +60,7 @@ const Profile = () => {
                     </div>
                     <div className="action-box">
                         <span>GitHub</span>
-                        <div className="action-btn">My GitHub</div>
+                        <a href="https://github.com/Forozi" target="_blank" rel="noopener noreferrer" className="action-btn">My GitHub</a>
                     </div>
                 </div>
 
@@ -72,7 +71,7 @@ const Profile = () => {
                     </div>
                     <div className="action-box">
                         <span>Report</span>
-                        <div className="action-btn">My PDF</div>
+                        <a href="https://drive.google.com/file/d/1Mk4BHOu2lRrMwktnihgsjY6tzdFMPXhV/view?usp=sharing" target="_blank" rel="noopener noreferrer" className="action-btn">My PDF</a>
                     </div>
                 </div>
 
