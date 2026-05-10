@@ -27,7 +27,7 @@ function setupRoutes(db, mqttClient, io) {
                 setTimeout(() => {
                     db.get(`SELECT status, action FROM action_history WHERE id = ?`, [actionId], (err, row) => {
                         if (row && row.status === 'PENDING') {
-                            console.log(`⚠️ No reply for ${deviceName}. Reverting.`);
+                            console.log(`No reply for ${deviceName}. Reverting.`);
                             db.run(`UPDATE action_history SET status = 'ERROR' WHERE id = ?`, [actionId]);
                             const revertTo = row.action === 'ON' ? 'OFF' : 'ON';
                             io.emit('device_update', { device: deviceName, state: revertTo });

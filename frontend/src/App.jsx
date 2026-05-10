@@ -11,7 +11,7 @@ import Profile from './pages/Profile';
 import { CONFIG } from './config';
 import './App.css';
 
-const socket = io(CONFIG.API_BASE_URL);
+const socket = io(CONFIG.API_BASE_URL); //connect to socket sv
 
 function App() {
   const [activePage, setActivePage] = useState('Dashboard');

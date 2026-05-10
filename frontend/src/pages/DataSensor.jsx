@@ -12,21 +12,20 @@ const DataSensor = ({ socket, isActive }) => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [activeSensor, setActiveSensor] = useState('all');
 
-    // We only need one state for search now.
     const [searchInput, setSearchInput] = useState('');
-    const [searchTerm, setSearchTerm] = useState(''); // This will only be set on button click
+    const [searchTerm, setSearchTerm] = useState('');
     const [valueInput, setValueInput] = useState('');
     const [searchValue, setSearchValue] = useState('');
 
-    // This fetchData function now depends on `searchTerm`
+    // execute search here
     const fetchData = useCallback(async () => {
         try {
             const res = await axios.get(CONFIG.API_ENDPOINTS.SENSOR_DATA, {
                 params: {
                     page: currentPage,
                     limit: rowsPerPage,
-                    status: statusFilter,
-                    search: searchTerm,
+                    status: statusFilter, //send to be
+                    search: searchTerm, //send to be
                     value: searchValue,
                     sensor: activeSensor
                 },
@@ -38,7 +37,7 @@ const DataSensor = ({ socket, isActive }) => {
         }
     }, [currentPage, rowsPerPage, statusFilter, searchTerm, searchValue, activeSensor]);
 
-    // The debounce useEffect is now gone. This effect runs when filters or the search term changes.
+    // execute fetch data
     useEffect(() => {
         if (isActive) {
             fetchData();
@@ -57,7 +56,7 @@ const DataSensor = ({ socket, isActive }) => {
         return () => socket.off('sensor_update', handleRealtimeUpdate);
     }, [socket, isActive, currentPage, fetchData]);
 
-    // --- NEW HANDLERS FOR MANUAL SEARCH ---
+    // SEARCH FUNCTION
     const handleSearchClick = () => {
         setSearchTerm(searchInput);
         setSearchValue(valueInput);
@@ -93,7 +92,7 @@ const DataSensor = ({ socket, isActive }) => {
     return (
         <div className="data-sensor-container">
             <h1 className="data-sensor-header">Data sensor</h1>
-
+            {/* SEARCH FILTER */}
             <div className="filter-bar">
                 <div className="search-bar-manual"> {/* Changed class for easier styling */}
                     <input

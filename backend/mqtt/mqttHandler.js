@@ -7,7 +7,7 @@ function setupMQTT(db, io) {
     const client = mqtt.connect(MQTT_BROKER); //set up broker connection
 
     let lastDataTime = Date.now();
-    let isOfflineLogged = false;
+    let isOfflineLogged = false; //error flag
 
     client.on('connect', () => {
         console.log("MQTT: Connected to broker at " + MQTT_BROKER);
@@ -27,7 +27,14 @@ function setupMQTT(db, io) {
 
                 db.run(sqlUpdate, function (err) {
                     if (err) console.error("Sync Error:", err.message);
-                    else if (this.changes > 0) console.log("DB: Action confirmed SUCCESS");
+                    else if (this.changes > 0) {
+                        console.log("DB: Action confirmed SUCCESS");
+                        db.get(`SELECT device, action FROM action_history ORDER BY created_at DESC LIMIT 1`, (err, row) => {
+                            if (!err && row) {
+                                io.emit('device_update', { device: row.device, state: row.action });
+                            }
+                        });
+                    }
                 });
 
                 Object.keys(data).forEach(key => {

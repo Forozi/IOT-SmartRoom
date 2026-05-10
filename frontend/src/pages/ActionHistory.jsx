@@ -115,10 +115,6 @@ const ActionHistory = ({ socket, isActive }) => {
                         <option value="LED_1">Lamp</option>
                         <option value="LED_2">AC</option>
                         <option value="LED_3">Fan</option>
-                        {/* --- NEW DEVICES ---
-                        <option value="LED_4">Speaker</option>
-                        <option value="LED_5">Window</option>
-                        */}
                     </select>
                 </div>
 
