@@ -9,6 +9,8 @@ export const CONFIG = {
         SENSOR_DATA: 'http://localhost:5000/api/sensor-data', // DataSensor.jsx
 
         ACTION_HISTORY: 'http://localhost:5000/api/action-history', // ActionHistory.jsx
+        ANALYTICS_METADATA: 'http://localhost:5000/api/analytics/metadata', // Analytics.jsx
+        ANALYTICS_DAILY_STATS: 'http://localhost:5000/api/analytics/daily-stats', // Analytics.jsx
     },
 
     DEVICES: {

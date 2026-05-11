@@ -1,0 +1,90 @@
+/* Analytics Page Specific Styles */
+
+.analytics-page {
+    color: #000;
+}
+
+.analytics-header {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.analytics-title h1 {
+    background: none;
+    color: #000;
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Glass & Bordered Filter Group */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #777;
+    padding: 8px 15px;
+    borderRadius: 4px;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.glass-select {
+    background: transparent;
+    border: none;
+    color: #000;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.glass-select:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.glass-select option {
+    background: #fff;
+    color: #000;
+}
+
+/* Chart Container */
+.analytics-chart-container {
+    height: 500px;
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #777;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #000;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.chart-date-label {
+    color: #555;
+    font-size: 0.9rem;
+    font-weight: bold;
+}

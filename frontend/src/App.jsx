@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { io } from 'socket.io-client';
-import { LayoutDashboard, Database, History, User } from 'lucide-react';
+import { LayoutDashboard, Database, History, User, BarChart3 } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
 import DataSensor from './pages/DataSensor';
 import ActionHistory from './pages/ActionHistory';
+import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import { CONFIG } from './config';
 import './App.css';
@@ -29,6 +30,9 @@ function App() {
         <div className={`nav-item ${activePage === 'ActionHistory' ? 'active' : ''}`} onClick={() => setActivePage('ActionHistory')}>
           <History size={20} /> Action History
         </div>
+        <div className={`nav-item ${activePage === 'Analytics' ? 'active' : ''}`} onClick={() => setActivePage('Analytics')}>
+          <BarChart3 size={20} /> Analytics
+        </div>
         <div className={`nav-item ${activePage === 'Profile' ? 'active' : ''}`} onClick={() => setActivePage('Profile')}>
           <User size={20} /> Profile
         </div>
@@ -44,6 +48,9 @@ function App() {
         )}
         {activePage === 'ActionHistory' && (
           <ActionHistory socket={socket} isActive={activePage === 'ActionHistory'} />
+        )}
+        {activePage === 'Analytics' && (
+          <Analytics />
         )}
         {activePage === 'Profile' && (
           <Profile />

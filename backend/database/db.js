@@ -23,6 +23,7 @@ db.serialize(() => {
         light INTEGER,
         created_at DATETIME DEFAULT (datetime('now','localtime'))
     )`);
+
     console.log("Database Tables Verified.");
 });
 

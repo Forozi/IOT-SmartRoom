@@ -1,0 +1,137 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include "DHT.h"
+
+// WIFI
+const char* ssid = "Forozi";
+const char* password = "24002023";
+
+// MQTT
+const char* mqtt_server = "10.103.90.212";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+// SENSOR PINS
+#define DHTPIN 32
+#define DHTTYPE DHT11
+#define CDS_PIN 34
+
+// LED PINS
+#define LED1 17
+#define LED2 19
+#define LED3 23
+
+DHT dht(DHTPIN, DHTTYPE);
+
+// timing
+unsigned long lastSensorTime = 0;
+const int sensorInterval = 2000;
+
+// ---------- MQTT CALLBACK ----------
+void callback(char* topic, byte* payload, unsigned int length) {
+  String message = "";
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i];
+  }
+  
+  Serial.print("Received: ");
+  Serial.println(message);
+
+  // Check for LED 1
+  if (message.indexOf("\"led\":1") > 0 && message.indexOf("true") > 0) digitalWrite(LED1, HIGH);
+  else if (message.indexOf("\"led\":1") > 0 && message.indexOf("false") > 0) digitalWrite(LED1, LOW);
+
+  // Check for LED 2
+  else if (message.indexOf("\"led\":2") > 0 && message.indexOf("true") > 0) digitalWrite(LED2, HIGH);
+  else if (message.indexOf("\"led\":2") > 0 && message.indexOf("false") > 0) digitalWrite(LED2, LOW);
+
+  // Check for LED 3
+  else if (message.indexOf("\"led\":3") > 0 && message.indexOf("true") > 0) digitalWrite(LED3, HIGH);
+  else if (message.indexOf("\"led\":3") > 0 && message.indexOf("false") > 0) digitalWrite(LED3, LOW);
+
+  client.publish("room/status_report", "{\"status\":\"COMMAND_OK\"}");
+}
+
+
+// ---------- MQTT RECONNECT ----------
+void reconnect() {
+
+  while (!client.connected()) {
+
+    Serial.print("Connecting to MQTT...");
+
+    if (client.connect("ESP32_Client")) {
+
+      Serial.println("connected");
+
+      client.subscribe("room/command");
+
+      client.publish("room/status_report", "{\"status\":\"ESP32_CONNECTED\"}");
+    }
+    else {
+
+      Serial.print("failed, rc=");
+      Serial.println(client.state());
+      delay(2000);
+
+    }
+  }
+}
+
+// ---------- SETUP ----------
+void setup() {
+
+  Serial.begin(115200);
+
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+
+  dht.begin();
+
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting WiFi");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi connected");
+
+  client.setServer(mqtt_server, 1884);
+  client.setCallback(callback);
+}
+
+// ---------- LOOP ----------
+// ---------- LOOP ----------
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  unsigned long currentTime = millis();
+  if (currentTime - lastSensorTime >= sensorInterval) {
+    lastSensorTime = currentTime;
+
+    int light = analogRead(CDS_PIN);
+    float hum = dht.readHumidity();
+    float temp = dht.readTemperature();
+
+    if (!isnan(hum) && !isnan(temp)) {
+      // 1. Log to Serial
+      Serial.printf("Temp: %.1fC | Hum: %.1f%% | Light: %d\n", temp, hum, light);
+
+      // 2. CREATE THE JSON STRING (Required by Backend)
+      String payload = "{\"temp\":" + String(temp) + 
+                        ",\"hum\":" + String(hum) + 
+                        ",\"light\":" + String(light) + "}";
+
+      // 3. PUBLISH TO THE CORRECT TOPIC (Required by Backend)
+      client.publish("room/sensor_data", payload.c_str());
+    }
+  }
+}

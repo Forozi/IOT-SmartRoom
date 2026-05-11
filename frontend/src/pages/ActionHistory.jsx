@@ -9,9 +9,6 @@ const deviceMap = {
     'LED_1': 'Lamp',
     'LED_2': 'AC',
     'LED_3': 'Fan'
-    // --- NEW DEVICES ---
-    // 'LED_4': 'Speaker',
-    // 'LED_5': 'Window'
 };
 
 const ActionHistory = ({ socket, isActive }) => {
@@ -34,7 +31,7 @@ const ActionHistory = ({ socket, isActive }) => {
                     limit: rowsPerPage,
                     status: statusFilter,
                     search: searchTerm,
-                    device: activeDevice // <-- NOW SENDING TO BACKEND
+                    device: activeDevice
                 },
             });
             setData(res.data.data);
@@ -42,7 +39,7 @@ const ActionHistory = ({ socket, isActive }) => {
         } catch (error) {
             console.error("Failed to fetch action history:", error);
         }
-    }, [currentPage, rowsPerPage, statusFilter, searchTerm, activeDevice]); // Added activeDevice to dependency
+    }, [currentPage, rowsPerPage, statusFilter, searchTerm, activeDevice]);
 
     useEffect(() => {
         if (isActive) {
@@ -54,14 +51,12 @@ const ActionHistory = ({ socket, isActive }) => {
         if (!isActive) return;
 
         const handleRealtimeUpdate = () => {
-            // Only auto-refresh if the user is on the first page, 
-            // so we don't interrupt them if they are looking at older history.
+            //refresh on 1 page only
             if (currentPage === 1) {
                 fetchData();
             }
         };
 
-        // Listen for the 'device_update' event that the server emits when ESP32 confirms success
         socket.on('device_update', handleRealtimeUpdate);
 
         return () => socket.off('device_update', handleRealtimeUpdate);

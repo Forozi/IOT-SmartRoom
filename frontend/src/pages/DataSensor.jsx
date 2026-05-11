@@ -20,7 +20,7 @@ const DataSensor = ({ socket, isActive }) => {
     // execute search here
     const fetchData = useCallback(async () => {
         try {
-            const res = await axios.get(CONFIG.API_ENDPOINTS.SENSOR_DATA, {
+            const res = await axios.get(CONFIG.API_ENDPOINTS.SENSOR_DATA, { //api 130
                 params: {
                     page: currentPage,
                     limit: rowsPerPage,
@@ -30,7 +30,7 @@ const DataSensor = ({ socket, isActive }) => {
                     sensor: activeSensor
                 },
             });
-            setData(res.data.data);
+            setData(res.data.data); // recevied filtered data
             setTotalPages(res.data.totalPages);
         } catch (error) {
             console.error("Failed to fetch sensor data:", error);
@@ -44,11 +44,11 @@ const DataSensor = ({ socket, isActive }) => {
         }
     }, [isActive, currentPage, rowsPerPage, statusFilter, searchTerm, searchValue, activeSensor, fetchData]);
 
-    // Real-time update effect remains the same.
+    // Real-time update effect
     useEffect(() => {
         if (!isActive) return;
         const handleRealtimeUpdate = () => {
-            if (currentPage === 1) {
+            if (currentPage === 1) { //refresh on page 1 only
                 fetchData();
             }
         };
@@ -64,7 +64,7 @@ const DataSensor = ({ socket, isActive }) => {
     };
 
     const handleResetClick = () => {
-        // Reset all filter states to their default values
+        // Reset all filter
         setSearchInput('');
         setSearchTerm('');
         setValueInput('');
@@ -94,7 +94,7 @@ const DataSensor = ({ socket, isActive }) => {
             <h1 className="data-sensor-header">Data sensor</h1>
             {/* SEARCH FILTER */}
             <div className="filter-bar">
-                <div className="search-bar-manual"> {/* Changed class for easier styling */}
+                <div className="search-bar-manual">
                     <input
                         type="text"
                         placeholder="Date/Time..."
@@ -131,7 +131,6 @@ const DataSensor = ({ socket, isActive }) => {
                 </div>
             </div>
 
-            {/* The rest of the component (table, pagination) remains the same */}
             <div className="table-wrapper">
                 <table>
                     <thead>
